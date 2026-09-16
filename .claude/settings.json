@@ -3,7 +3,8 @@
     "lasagna": {
       "source": {
         "source": "github",
-        "repo": "TommasoTerrin/lasagna-code"
+        "repo": "TommasoTerrin/lasagna-code",
+        "ref": "develop"
       }
     }
   },
