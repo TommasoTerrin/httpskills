@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "lasagna": {
+      "source": {
+        "source": "github",
+        "repo": "TommasoTerrin/lasagna-code"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "lasagna@lasagna": true
+  }
+}
