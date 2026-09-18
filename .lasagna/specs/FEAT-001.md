@@ -175,6 +175,7 @@ From the grilling. Stated, never silent.
 | AC-FEAT-001-036 | a skill whose `compatibility` is a non-string YAML value (for example a number or a boolean) | the catalogue is read | the skill is invalid and absent from the catalogue, the same as a `compatibility` that is a too-long string |
 | AC-FEAT-001-037 | a skill directory that exists on disk but fails validation | `get_resource` is called with its directory name and any relative path | `SkillNotFound` is raised — the same error `get_skill` raises for the identical directory (AC-008), not `InvalidSkill` or `InvalidSkillName` leaking, and not `ResourceNotFound` |
 | AC-FEAT-001-038 | a skills root with no directory named `absent-skill` | `get_resource("absent-skill", path)` is called with `path` itself also invalid (empty, or absolute) | `SkillNotFound` is raised, not `ResourceNotContained` — an unknown skill is reported before its path is even considered |
+| AC-FEAT-001-039 | a resolved location inside a valid skill's directory that does not exist on disk (adapter layer, `FilesystemSkillStorage`) | `get_resource(name, path)` is called | `ResourceNotFound` is raised carrying the *client's* requested `name` and `path` (ERR-002's stated fields) — not an empty name and not the server's absolute filesystem path |
 
 Criteria 028 and 029 were added after gate 1, during domain modelling: the
 mandated stress test surfaced two behaviours the original table did not pin

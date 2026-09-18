@@ -8,6 +8,7 @@ from httpskills.domain.errors import (
     InvalidSkill,
     InvalidSkillName,
     ResourceNotContained,
+    ResourceNotFound,
     SkillNotFound,
 )
 from httpskills.domain.model import (
@@ -155,5 +156,8 @@ class SkillLibrary:
             root_len = len(resolved.skill_root)
             if resolved.target[:root_len] != resolved.skill_root:
                 raise ResourceNotContained(name=name, path=path)
-            return self._storage.read_resource(resolved.target)
+            try:
+                return self._storage.read_resource(resolved.target)
+            except ResourceNotFound:
+                raise ResourceNotFound(name=name, path=path) from None
         raise SkillNotFound(name=name)
