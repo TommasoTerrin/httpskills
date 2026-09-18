@@ -1,0 +1,4 @@
+# Test fixtures and source assert on exact bytes in several places
+# (e.g. tests/test_mcp_server_e2e.py, skills/demo-skill/*). Force LF on
+# checkout so autocrlf never rewrites content the tests compare byte-for-byte.
+* text=auto eol=lf

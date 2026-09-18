@@ -1,0 +1,1 @@
+This is a small asset file for the demo-skill fixture.
