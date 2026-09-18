@@ -686,6 +686,71 @@ def test_ac_feat_001_032_get_resource_with_an_empty_path_raises_resource_not_con
     )
 
 
+class _StorageLeakingResourceNotFound(FakeContainedSkillStorage):
+    """A `SkillStorage` double whose `read_resource` raises `ResourceNotFound`
+    the way the real `FilesystemSkillStorage` adapter does today: `name` is
+    hardcoded empty and `path` is the server's own absolute filesystem path,
+    neither of which is anything the client passed to `get_resource`. Used to
+    prove the domain seam rewraps whatever the storage port hands it, rather
+    than letting the port's own placeholder values leak straight through.
+    """
+
+    def read_resource(self, location: tuple[str, ...]) -> bytes:
+        raise ResourceNotFound(name="", path="/absolute/server/path/that/should/not/leak")
+
+
+# AC-FEAT-001-039
+def test_ac_feat_001_039_resource_not_found_carries_the_client_s_name_and_path_not_the_storage_s() -> None:
+    """A resolved-but-absent resource's `ResourceNotFound` carries the client's requested `name` and `path`, not whatever the storage port happened to put in the exception it raised.
+
+    AC-011 proves ERR-002 fires for this case; this criterion is about what the
+    exception that reaches the caller actually carries. The error table fixes
+    ERR-002's fields as the client-facing `name` and `path` of the request, and
+    `SkillLibrary.get_resource` catches and rewraps every other error this
+    method can raise with the real requested values (see AC-007, AC-008,
+    AC-012 through AC-015, AC-029, AC-038) rather than letting whatever a port
+    raises propagate untouched.
+
+    The storage double here misbehaves exactly the way the real filesystem
+    adapter does: `resolve` succeeds and lands the request safely inside the
+    skill's own root (so containment is not what is being tested), but
+    `read_resource` raises `ResourceNotFound(name="", path=<server's own
+    absolute path>)` unconditionally — an empty name and a path the client
+    never supplied. If the domain seam let that instance through unchanged,
+    the exception the caller sees would carry those placeholder values instead
+    of the name and path actually asked for.
+
+    The expected values are the literal arguments passed to `get_resource` —
+    `"real-skill-name"` and `"some/requested/path.md"` — the independent
+    source the criterion names, not anything recomputed from what the storage
+    double raised.
+    """
+    pdf_processing = FakeSkillCandidate(
+        directory_name="real-skill-name",
+        skill_md_text=SKILL_MD_PDF_PROCESSING.replace("pdf-processing", "real-skill-name"),
+    )
+    skill_root = ("skills", "real-skill-name")
+    storage = _StorageLeakingResourceNotFound(
+        [pdf_processing],
+        skill_roots={"real-skill-name": skill_root},
+        files={},
+    )
+    library = SkillLibrary(storage)
+
+    with pytest.raises(ResourceNotFound) as caught:
+        library.get_resource("real-skill-name", "some/requested/path.md")
+
+    raised = caught.value
+    assert raised.name == "real-skill-name", (
+        "ResourceNotFound must carry the name the client asked for, not the "
+        f"storage port's own placeholder value; it held {raised.name!r}"
+    )
+    assert raised.path == "some/requested/path.md", (
+        "ResourceNotFound must carry the path the client asked for, not the "
+        f"server's absolute filesystem path; it held {raised.path!r}"
+    )
+
+
 class _SymlinkEscapingContainedSkillStorage(FakeContainedSkillStorage):
     """Resolves a specific relative path the way a real filesystem port would
     resolve a symlink: the requested path stays inside the skill directory in
