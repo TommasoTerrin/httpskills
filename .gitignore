@@ -1,0 +1,11 @@
+
+# lasagna phase state: local, per-feature, changes every cycle
+.lasagna/state/
+
+# python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
